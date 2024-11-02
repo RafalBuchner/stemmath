@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "stemmath"
+version = "0.1.0"
+description = "engine for stem plow"
+authors = ["Rafał Buchner <rafal.buchner@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "stemmath" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fonttools = "^4.54.1"
+fontparts = "^0.12.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
