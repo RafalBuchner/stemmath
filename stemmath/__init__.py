@@ -110,6 +110,32 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
             - t (float): The parameter t at which the closest point lies on the segment.
     """
 
+    def __appendPointRefs(points, closestPointsRef, contour, segIdx, contour_index):
+        contour.index = contour_index
+        seg = SegmentInfo(points[-1][0], contour, segIdx)
+        if len(points) == 2:
+
+            closestPoint, contour_index, segment_index, _, t = getClosestInfo(
+                cursorPosition,
+                seg,
+                points[0][1],
+                points[1][1],
+            )
+
+        if len(points) == 4:
+
+            closestPoint, contour_index, segment_index, _, t = getClosestInfo(
+                cursorPosition,
+                seg,
+                points[0][1],
+                points[1][1],
+                points[2][1],
+                points[3][1],
+            )
+            #### TODO: Jesli seg.type == qcurve, to przerob to na StemMath.stemThicnkessGuidelines(cursorPosition,seg.type,P1,P2,P3), wtedy zmien funkcje z TMath na takie, co to będą czystsze jesli chodzi o adekwatnosc do Cubic
+
+        closestPointsRef.append((closestPoint, contour_index, segment_index, t))
+
     # slow, only used for anchoring
     closestPointsRef = []
 
@@ -119,6 +145,8 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
         segIdx = 0
         lastCurvePoint = None
         for pointIdx, point in enumerate(pointPenPoints):
+            if contour_index == 0:
+                ic(contour_index, point, len(pointPenPoints) - pointIdx)
             segLength = None
             match point[0]:  # checking segmentType
                 case "moveTo":
@@ -127,16 +155,30 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                     if pointIdx == 0:
                         lastCurvePoint = point
                         continue
+                    elif not (len(pointPenPoints) - 1) - pointIdx:
+                        points = [point, lastCurvePoint]
+                        __appendPointRefs(
+                            points, closestPointsRef, contour, segIdx, contour_index
+                        )
+                        continue
                     segLength = 4
                 case "line":
                     # line
                     if pointIdx == 0:
+                        lastCurvePoint = point
+                        continue
+                    elif not (len(pointPenPoints) - 1) - pointIdx:
+                        points = [point, lastCurvePoint]
+                        __appendPointRefs(
+                            points, closestPointsRef, contour, segIdx, contour_index
+                        )
                         continue
                     segLength = 2
                 case None:
                     # curve's handle
                     if pointIdx != len(pointPenPoints) - 1:
                         continue
+
                     # handling lastCurvePoint
                     segLength = 3
 
@@ -150,36 +192,10 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                     lastCurvePoint
                 ]
 
-            contour.index = contour_index
-            seg = SegmentInfo(points[-1][0], contour, segIdx)
-            segIdx += 1
-
-            if len(points) == 2:
-
-                # making sure that code doesn't take open segment of the contour into count
-                if points[0][0] == "line" and points[1][0] == "move":
-                    continue
-
-                closestPoint, contour_index, segment_index, _, t = getClosestInfo(
-                    cursorPosition,
-                    seg,
-                    points[0][1],
-                    points[1][1],
-                )
-
-            if len(points) == 4:
-
-                closestPoint, contour_index, segment_index, _, t = getClosestInfo(
-                    cursorPosition,
-                    seg,
-                    points[0][1],
-                    points[1][1],
-                    points[2][1],
-                    points[3][1],
-                )
-                #### TODO: Jesli seg.type == qcurve, to przerob to na StemMath.stemThicnkessGuidelines(cursorPosition,seg.type,P1,P2,P3), wtedy zmien funkcje z TMath na takie, co to będą czystsze jesli chodzi o adekwatnosc do Cubic
-
-            closestPointsRef.append((closestPoint, contour_index, segment_index, t))
+            # making sure that code doesn't take open segment of the contour into count
+            if points[0][0] == "line" and points[1][0] == "move":
+                return
+            __appendPointRefs(points, closestPointsRef, contour, segIdx, contour_index)
 
     distances = []
 
