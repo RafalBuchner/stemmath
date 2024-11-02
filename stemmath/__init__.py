@@ -1,11 +1,12 @@
 from __future__ import division
-from fontTools.misc.bezierTools import splitCubicAtT, splitQuadraticAtT
-from typing import Sequence
-from fontParts.base import BaseSegment
+
 import math
-from numbers import Number
 from dataclasses import dataclass
-from typing import Any
+from numbers import Number
+from typing import Any, Sequence
+
+from fontParts.base import BaseSegment
+from fontTools.misc.bezierTools import splitCubicAtT, splitQuadraticAtT
 
 ACCURACY = 18
 
@@ -116,12 +117,16 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
 
         pointPenPoints = contour._points
         segIdx = 0
+        lastCurvePoint = None
         for pointIdx, point in enumerate(pointPenPoints):
             segLength = None
             match point[0]:  # checking segmentType
                 case "moveTo":
                     continue
                 case "curve":
+                    if pointIdx == 0:
+                        lastCurvePoint = point
+                        continue
                     segLength = 4
                 case "line":
                     # line
@@ -130,9 +135,21 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                     segLength = 2
                 case None:
                     # curve's handle
-                    continue
+                    if pointIdx != len(pointPenPoints) - 1:
+                        continue
+                    # handling lastCurvePoint
+                    segLength = 3
 
-            points = pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1]
+            # if lastCurvePoint doesn't exis, or it isn't the last curve segment in the countour
+            if not lastCurvePoint or (
+                pointIdx != len(pointPenPoints) - 1 and point[0] != None
+            ):
+                points = pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1]
+            else:
+                points = pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1] + [
+                    lastCurvePoint
+                ]
+
             contour.index = contour_index
             seg = SegmentInfo(points[-1][0], contour, segIdx)
             segIdx += 1
