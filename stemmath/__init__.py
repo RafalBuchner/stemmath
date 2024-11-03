@@ -7,6 +7,7 @@ from typing import Any, Sequence
 
 from fontParts.base import BaseSegment
 from fontTools.misc.bezierTools import splitCubicAtT, splitQuadraticAtT
+from icecream import ic
 
 ACCURACY = 18
 
@@ -97,7 +98,7 @@ def calculateDetailsForNearestPointOnCurve(cursorPosition, glyph):
 
 def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
     """
-    This is special version of calculateDetailsForNearestPointOnCurve to work with BooleanOperations
+    This is a special version of calculateDetailsForNearestPointOnCurve to work with BooleanOperations.
     Calculate details for the nearest point on a curve to the given cursor position within a glyph.
     Args:
         cursorPosition (tuple): A tuple (x, y) representing the cursor position.
@@ -114,16 +115,10 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
         contour.index = contour_index
         seg = SegmentInfo(points[-1][0], contour, segIdx)
         if len(points) == 2:
-
             closestPoint, contour_index, segment_index, _, t = getClosestInfo(
-                cursorPosition,
-                seg,
-                points[0][1],
-                points[1][1],
+                cursorPosition, seg, points[0][1], points[1][1]
             )
-
-        if len(points) == 4:
-
+        elif len(points) == 4:
             closestPoint, contour_index, segment_index, _, t = getClosestInfo(
                 cursorPosition,
                 seg,
@@ -132,23 +127,17 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                 points[2][1],
                 points[3][1],
             )
-            #### TODO: Jesli seg.type == qcurve, to przerob to na StemMath.stemThicnkessGuidelines(cursorPosition,seg.type,P1,P2,P3), wtedy zmien funkcje z TMath na takie, co to będą czystsze jesli chodzi o adekwatnosc do Cubic
-
         closestPointsRef.append((closestPoint, contour_index, segment_index, t))
 
-    # slow, only used for anchoring
     closestPointsRef = []
 
     for contour_index, contour in enumerate(glyph.contours):
-
         pointPenPoints = contour._points
         segIdx = 0
         lastCurvePoint = None
         for pointIdx, point in enumerate(pointPenPoints):
-            if contour_index == 0:
-                ic(contour_index, point, len(pointPenPoints) - pointIdx)
             segLength = None
-            match point[0]:  # checking segmentType
+            match point[0]:
                 case "moveTo":
                     continue
                 case "curve":
@@ -163,11 +152,14 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                         continue
                     segLength = 4
                 case "line":
-                    # line
                     if pointIdx == 0:
                         lastCurvePoint = point
                         continue
                     elif not (len(pointPenPoints) - 1) - pointIdx:
+                        points = [pointPenPoints[pointIdx - 1], point]
+                        __appendPointRefs(
+                            points, closestPointsRef, contour, segIdx, contour_index
+                        )
                         points = [point, lastCurvePoint]
                         __appendPointRefs(
                             points, closestPointsRef, contour, segIdx, contour_index
@@ -175,16 +167,12 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                         continue
                     segLength = 2
                 case None:
-                    # curve's handle
                     if pointIdx != len(pointPenPoints) - 1:
                         continue
-
-                    # handling lastCurvePoint
                     segLength = 3
 
-            # if lastCurvePoint doesn't exis, or it isn't the last curve segment in the countour
             if not lastCurvePoint or (
-                pointIdx != len(pointPenPoints) - 1 and point[0] != None
+                pointIdx != len(pointPenPoints) - 1 and point[0] is not None
             ):
                 points = pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1]
             else:
@@ -192,17 +180,12 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                     lastCurvePoint
                 ]
 
-            # making sure that code doesn't take open segment of the contour into count
             if points[0][0] == "line" and points[1][0] == "move":
                 return
+
             __appendPointRefs(points, closestPointsRef, contour, segIdx, contour_index)
 
-    distances = []
-
-    for ref in closestPointsRef:
-        point = ref[0]
-        distance = lenghtAB(cursorPosition, point)
-        distances.append(distance)
+    distances = [lenghtAB(cursorPosition, ref[0]) for ref in closestPointsRef]
 
     if not distances:
         return None, None, None, None
