@@ -69,7 +69,7 @@ def calculateDetailsForNearestPointOnCurve(cursorPosition, glyph):
         return None, None, None, None
 
     closestPointOnPathRef = min(
-        closestPointsRef, key=lambda ref: lenghtAB(cursorPosition, ref[0])
+        closestPointsRef, key=lambda ref: lengthAB(cursorPosition, ref[0])
     )
     closestPoint, contour_index, segment_index, t = closestPointOnPathRef
 
@@ -211,7 +211,7 @@ def closestPointAndT_binaryIndexSearch_withSegments(
 
         for i in range(curveDiv + 1):
             t = i / curveDiv
-            distance = lenghtAB(pointOffCurve, LUT[(i, t)])
+            distance = lengthAB(pointOffCurve, LUT[(i, t)])
 
             if distance < minimalDist:
                 minimalDist = distance
@@ -246,7 +246,7 @@ def closestPointAndT_binaryIndexSearch(
 
         for i in range(curveDiv + 1):
             t = i / curveDiv
-            distance = lenghtAB(pointOffCurve, LUT[(i, t)])
+            distance = lengthAB(pointOffCurve, LUT[(i, t)])
 
             if distance < minimalDist:
                 minimalDist = distance
@@ -275,7 +275,7 @@ def calculateGuidesBasedOnT(
     """
 
     closestPoint = calcSeg(t, *points)
-    guide1, guide2 = getPerpedicularLineToTangent(segType, t, *points)
+    guide1, guide2 = getPerpendicularLineToTangent(segType, t, *points)
 
     def translate_guide(guide, offset):
         return [(x + offset[0], y + offset[1]) for x, y in guide]
@@ -332,7 +332,7 @@ def sortPointsDistances(
     myPoint: Sequence[Number], points: Sequence[Sequence[Number]]
 ) -> Sequence[Sequence[Number]]:
     def _sorter(point):
-        return lenghtAB(myPoint, point)
+        return lengthAB(myPoint, point)
 
     points = sorted(points, key=_sorter)
     return points
