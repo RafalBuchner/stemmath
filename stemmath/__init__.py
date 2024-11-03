@@ -9,6 +9,7 @@ from fontParts.base import BaseSegment
 from fontTools.misc.bezierTools import splitCubicAtT, splitQuadraticAtT
 from icecream import ic
 
+
 ACCURACY = 18
 
 
@@ -17,9 +18,14 @@ class SegmentInfo:
     type: str
     contour: Any
     index: int
+    points: Sequence
     """
     artificaial segment class specially made for boolean version of calculateDetailsForNearestPointOnCurve
     """
+
+    @property
+    def positions(self):
+        return tuple(point[1] for point in self.points)
 
 
 def calculateDetailsForNearestPointOnCurve(cursorPosition, glyph):
@@ -93,13 +99,13 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
 
     def __appendPointRefs(points, closestPointsRef, contour, segIdx, contour_index):
         contour.index = contour_index
-        seg = SegmentInfo(points[-1][0], contour, segIdx)
+        seg = SegmentInfo(points[-1][0], contour, segIdx, points)
         if len(points) == 2:
-            closestPoint, contour_index, segment_index, _, t = getClosestInfo(
+            closestPoint, contour_index, _, _, t = getClosestInfo(
                 cursorPosition, seg, points[0][1], points[1][1]
             )
         elif len(points) == 4:
-            closestPoint, contour_index, segment_index, _, t = getClosestInfo(
+            closestPoint, contour_index, _, _, t = getClosestInfo(
                 cursorPosition,
                 seg,
                 points[0][1],
@@ -107,7 +113,7 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
                 points[2][1],
                 points[3][1],
             )
-        closestPointsRef.append((closestPoint, contour_index, segment_index, t))
+        closestPointsRef.append((closestPoint, seg, t))
 
     closestPointsRef = []
 
@@ -172,9 +178,9 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
 
     indexOfClosestPoint = distances.index(min(distances))
     closestPointOnPathRef = closestPointsRef[indexOfClosestPoint]
-    closestPoint, contour_index, segment_index, t = closestPointOnPathRef
+    closestPoint, seg, t = closestPointOnPathRef
 
-    return closestPoint, contour_index, segment_index, t
+    return closestPoint, seg, t
 
 
 def getClosestInfo(
@@ -269,11 +275,17 @@ def calculateGuidesBasedOnT(
     Sequence[Sequence[Number]],
 ]:
     """
-    Calculate guidelines for stem thickness.
-    Returns two lines, each line has two points.
-    Each point is represented as a tuple with x, y values.
-    """
+    Calculate guidelines for stem thickness based on a given parameter t and segment type.
 
+    Args:
+        t (float): A parameter used in the calculation.
+        segType (str): The type of segment to be used in the calculation.
+        *points (Sequence[Sequence[Number]]): A variable number of sequences representing points.
+
+    Returns:
+        tuple: A tuple containing two sequences, each representing a guideline.
+               Each guideline is a sequence of two points, where each point is a tuple of x, y coordinates.
+    """
     closestPoint = calcSeg(t, *points)
     guide1, guide2 = getPerpendicularLineToTangent(segType, t, *points)
 
@@ -418,7 +430,9 @@ def calcSeg(t: Number, *points: Sequence[Sequence[Number]]) -> Sequence[Number]:
     elif len(points) == 4:
         return calcBezier(t, *points)
     else:
-        raise ValueError("Invalid number of points for the given segment type")
+        raise ValueError(
+            f"Invalid number of points for the given segment type {points}, {len(points)}"
+        )
 
 
 def lengthAB(A: Sequence[Number], B: Sequence[Number]) -> Number:
