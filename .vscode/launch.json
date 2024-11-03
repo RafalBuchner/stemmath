@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Python File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": ["--debug"],
+      "env": { "YOUR_ENV_VAR": "value" }
+      //   "preLaunchTask": "clearTerminal"
+      //   "postDebugTask": "clearTerminal"
+    }
+  ]
+}

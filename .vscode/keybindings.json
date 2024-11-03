@@ -1,0 +1,8 @@
+[
+  // ...existing keybindings...
+  {
+    "key": "ctrl+shift+b", // macOS style keybinding
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Python File"
+  }
+]

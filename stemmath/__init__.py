@@ -649,3 +649,81 @@ def getPerpendicularLineToTangent(
     tanPx2, tanPy2 = rotatePoint((0, 1000), tanAngle - 180, (0, 0))  # Second line
 
     return ((tanPx1, tanPy1), (0, 0)), ((0, 0), (tanPx2, tanPy2))
+
+
+#########################################################################
+#########################################################################
+#########################################################################
+# intersections
+#########################################################################
+#########################################################################
+#########################################################################
+
+
+def IntersectGlyphWithLine(
+    glyph,
+    line: tuple[float | int],
+    canHaveComponent: bool = False,
+    addSideBearings: bool = False,
+) -> tuple[tuple[float | int]]: ...
+
+
+def intersects_rects(rect1, rect2):
+    return not (
+        rect1[0] > rect2[0] + rect2[2]
+        or rect1[0] + rect1[2] < rect2[0]
+        or rect1[1] > rect2[1] + rect2[3]
+        or rect1[1] + rect1[3] < rect2[1]
+    )
+
+
+def pointsAreTheSame(A, B, threshold):
+    ax, ay = A
+    bx, by = B
+    return math.fabs(ax - bx) < threshold and math.fabs(ay - by) < threshold
+
+
+from fontTools.pens.boundsPen import BoundsPen
+
+
+def calculate_intersections(glyph, line):
+    startPoint, endPoint = line
+    intersections = []
+
+    bounds = self.fast_bounds()
+    line_bound = {
+        min(startPoint[0], endPoint[0]),
+        min(startPoint[1], endPoint[1]),
+        math.fabs(startPoint[0] - endPoint[0]),
+        math.fabs(startPoint[1] - endPoint[1]),
+    }
+    if math.fabs(line_bound[3]) < 0.000001:
+        line_bound[1] -= 1
+        line_bound[3] += 2
+    elif math.fabs(line_bound[2]) < 0.000001:
+        line_bound[0] -= 1
+        line_bound[2] += 2
+
+    if intersects_rects(line_bound, bounds):
+
+        for contours in glyph.contours:
+
+            path_intersections = self.calculate_intersections_for_path(
+                contours, startPoint, endPoint
+            )
+            intersections.extend(path_intersections)
+
+    has_startPoint = any(
+        pointsAreTheSame(point, startPoint, 0.000001) for point in intersections
+    )
+    has_endPoint = any(
+        pointsAreTheSame(point, endPoint, 0.000001) for point in intersections
+    )
+
+    if not has_startPoint:
+        intersections.append(startPoint)
+    if not has_endPoint:
+        intersections.append(endPoint)
+
+    intersections.sort(key=lambda point: (point[0], point[1]), reverse=False)
+    return intersections
