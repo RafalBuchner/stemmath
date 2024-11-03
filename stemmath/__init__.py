@@ -165,7 +165,7 @@ def calculateDetailsForNearestPointOnCurveBoolean(cursorPosition, glyph):
 
             __appendPointRefs(points, closestPointsRef, contour, segIdx, contour_index)
 
-    distances = [lenghtAB(cursorPosition, ref[0]) for ref in closestPointsRef]
+    distances = [lengthAB(cursorPosition, ref[0]) for ref in closestPointsRef]
 
     if not distances:
         return None, None, None, None
