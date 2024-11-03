@@ -1,18 +1,20 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-  <dict>
-    <key>dull_corner</key>
-    <string>dull_corner.glif</string>
-    <key>test01</key>
-    <string>test01.glif</string>
-    <key>test02</key>
-    <string>test02.glif</string>
-    <key>test03</key>
-    <string>test03.glif</string>
-    <key>test04</key>
-    <string>test04.glif</string>
-    <key>test05</key>
-    <string>test05.glif</string>
-  </dict>
+	<dict>
+		<key>dull_corner</key>
+		<string>dull_corner.glif</string>
+		<key>intersectionTest</key>
+		<string>intersectionT_est.glif</string>
+		<key>test01</key>
+		<string>test01.glif</string>
+		<key>test02</key>
+		<string>test02.glif</string>
+		<key>test03</key>
+		<string>test03.glif</string>
+		<key>test04</key>
+		<string>test04.glif</string>
+		<key>test05</key>
+		<string>test05.glif</string>
+	</dict>
 </plist>
