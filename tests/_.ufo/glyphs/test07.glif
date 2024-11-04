@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="test07" format="2">
+  <outline>
+    <contour>
+      <point x="51.86" y="-134.985" type="line"/>
+      <point x="391.004" y="-134.59699999999998" type="line"/>
+      <point x="391.004" y="47.958999999999946" type="line"/>
+      <point x="51.86" y="47.958999999999946" type="line"/>
+    </contour>
+  </outline>
+</glyph>

@@ -1,15 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <glyph name="test05" format="2">
-	<outline>
-		<contour>
-			<point x="235.815" y="78.336" type="line"/>
-			<point x="31.8024" y="26.346" type="line"/>
-			<point x="37.3963" y="-23.999" type="line"/>
-			<point x="206.529" y="32.927" type="line"/>
-			<point x="253.583" y="-41.439" type="line"/>
-			<point x="189.418" y="-102.642" type="line"/>
-			<point x="220.678" y="-127.65" type="line"/>
-			<point x="304.916" y="-41.439" type="line"/>
-		</contour>
-	</outline>
+  <outline>
+    <contour>
+      <point x="235.815" y="78.33600000000001" type="line"/>
+      <point x="31.8024" y="26.346000000000004" type="line"/>
+      <point x="37.3963" y="-23.999000000000024" type="line"/>
+      <point x="206.529" y="32.92700000000002" type="line"/>
+      <point x="253.583" y="-41.438999999999965" type="line"/>
+      <point x="189.418" y="-102.64200000000005" type="line"/>
+      <point x="220.678" y="-127.64999999999998" type="line"/>
+      <point x="304.916" y="-41.438999999999965" type="line"/>
+    </contour>
+  </outline>
 </glyph>

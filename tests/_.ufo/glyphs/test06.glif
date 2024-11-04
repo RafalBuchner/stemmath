@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="test06" format="2">
+  <outline>
+    <contour>
+      <point x="55.2192" y="33.87699999999995" type="curve" smooth="yes"/>
+      <point x="154.877" y="25.096000000000004" type="line"/>
+      <point x="154.877" y="-11.341999999999985"/>
+      <point x="155.755" y="-57.000999999999976"/>
+      <point x="161.901" y="-96.952" type="curve" smooth="yes"/>
+      <point x="166.292" y="-124.61000000000001"/>
+      <point x="188.682" y="-147.0"/>
+      <point x="214.584" y="-147.0" type="curve" smooth="yes"/>
+      <point x="240.047" y="-147.0"/>
+      <point x="262.876" y="-126.36599999999999"/>
+      <point x="260.681" y="-100.46400000000006" type="curve" smooth="yes"/>
+      <point x="253.657" y="-21.87900000000002" type="line" smooth="yes"/>
+      <point x="243.998" y="87.43700000000001"/>
+      <point x="200.535" y="124.31500000000005"/>
+      <point x="116.682" y="124.31500000000005" type="curve" smooth="yes"/>
+      <point x="55.2192" y="124.31500000000005" type="line" smooth="yes"/>
+      <point x="30.195" y="124.31500000000005"/>
+      <point x="10.0" y="104.12"/>
+      <point x="10.0" y="79.096" type="curve" smooth="yes"/>
+      <point x="10.0" y="54.072"/>
+      <point x="30.195" y="36.072"/>
+    </contour>
+  </outline>
+</glyph>
