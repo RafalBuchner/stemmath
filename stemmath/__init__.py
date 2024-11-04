@@ -669,7 +669,9 @@ from bezier import Curve
 from bezier._geometric_intersection import all_intersections
 
 
-def find_intersections(glyph: BooleanGlyph, line_start: tuple, line_end: tuple) -> list:
+def find_intersectionsForBooleanGlyph(
+    glyph: BooleanGlyph, line_start: tuple, line_end: tuple
+) -> list:
     intersections = []
 
     for contour in glyph.contours:
@@ -877,7 +879,7 @@ if __name__ == "__main__":
     # TIME COMPARISON
 
     start_time = time.time()
-    intersections = find_intersections(glyph, *refLine)
+    intersections = find_intersectionsForBooleanGlyph(glyph, *refLine)
     end_time = time.time()
 
     print(f"RB Execution time: {end_time - start_time} seconds")
