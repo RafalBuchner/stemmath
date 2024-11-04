@@ -665,8 +665,82 @@ def getPerpendicularLineToTangent(
 
 from booleanOperations.booleanGlyph import BooleanGlyph
 import numpy as np
-from bezier import Curve
 from bezier._geometric_intersection import all_intersections
+from fontParts.base import BaseGlyph
+
+
+def find_intersectionsForDefconGlyph(
+    glyph: BaseGlyph, line_start: tuple, line_end: tuple
+) -> list:
+    intersections = []
+
+    for contour in glyph:
+        for segIndex, seg in enumerate(contour.segments):
+            points = [contour.segments[segIndex - 1][-1]] + seg
+            match len(points):
+                case 2:
+                    P1, P2 = points
+                    if P1.segmentType == "line" and P2.segmentType == "move":
+                        continue
+                    P1, P2 = ((P1.x, P1.y), (P2.x, P2.y))
+                    intersection = line_segment_intersection(
+                        line_start, line_end, P1, P2
+                    )
+                    if intersection is not None:
+                        intersections.append(intersection)
+
+                case 4:
+                    P1, P2, P3, P4 = points
+                    P1, P2, P3, P4 = (
+                        (P1.x, P1.y),
+                        (P2.x, P2.y),
+                        (P3.x, P3.y),
+                        (P4.x, P4.y),
+                    )
+                    intersection = curve_intersection(
+                        line_start, line_end, (P1, P2, P3, P4)
+                    )
+                    if intersection is not None:
+                        intersections.append(intersection)
+
+    return intersections
+
+
+def find_intersectionsForGlyph(
+    glyph: BaseGlyph, line_start: tuple, line_end: tuple
+) -> list:
+    intersections = []
+
+    for contour in glyph.contours:
+        for segIndex, seg in enumerate(contour.segments):
+            points = [contour.segments[segIndex - 1][-1]] + list(seg.points)
+            match len(points):
+                case 2:
+                    P1, P2 = points
+                    if P1.type == "line" and P2.type == "move":
+                        continue
+                    P1, P2 = ((P1.x, P1.y), (P2.x, P2.y))
+                    intersection = line_segment_intersection(
+                        line_start, line_end, P1, P2
+                    )
+                    if intersection is not None:
+                        intersections.append(intersection)
+
+                case 4:
+                    P1, P2, P3, P4 = points
+                    P1, P2, P3, P4 = (
+                        (P1.x, P1.y),
+                        (P2.x, P2.y),
+                        (P3.x, P3.y),
+                        (P4.x, P4.y),
+                    )
+                    intersection = curve_intersection(
+                        line_start, line_end, (P1, P2, P3, P4)
+                    )
+                    if intersection is not None:
+                        intersections.append(intersection)
+
+    return intersections
 
 
 def find_intersectionsForBooleanGlyph(
@@ -837,6 +911,7 @@ if __name__ == "__main__":
         font = OpenFont(UFOpath)
     ############################### XXX
     rGlyph = font["test02"].copy()
+    refLine = (-50, -100), (600, 60)
     ############################### XXX
     if "intersectionTest" in font:
         del font["intersectionTest"]
@@ -845,14 +920,14 @@ if __name__ == "__main__":
 
     rGlyph = font["intersectionTest"]
 
-    glyph = BooleanGlyph(rGlyph)
+    # glyph = BooleanGlyph(rGlyph)
 
-    refLine = (-50, -100), (600, 60)
+    # intersectionsA = find_intersectionsForBooleanGlyph(glyph, *refLine)
 
     # TIME COMPARISON
 
     start_time = time.time()
-    intersectionsA = find_intersectionsForBooleanGlyph(glyph, *refLine)
+    intersectionsA = find_intersectionsForDefconGlyph(rGlyph.naked(), *refLine)
     end_time = time.time()
 
     print(f"RB Execution time: {end_time - start_time} seconds")
@@ -869,12 +944,13 @@ if __name__ == "__main__":
 
     pen = rGlyph.getPen()
     _intersections = intersectionsA
-    if _intersections:
-        for idx, p in enumerate(_intersections):
-            if idx == 0:
-                pen.moveTo(p)
-                continue
-            pen.lineTo(p)
-        pen.endPath()
+    print(_intersections)
+    # if _intersections:
+    #     for idx, p in enumerate(_intersections):
+    #         if idx == 0:
+    #             pen.moveTo(p)
+    #             continue
+    #         pen.lineTo(p)
+    #     pen.endPath()
     # print(intersections)
 # Example usage:
