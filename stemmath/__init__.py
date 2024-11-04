@@ -745,7 +745,7 @@ def calculate_intersection(line1_start, line1_end, points):
 
 
 def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
-
+    # this could easily return ts together with nodes
     curve_nodes = np.asfortranarray(
         [
             [line2_start[0], line2_end[0]],
@@ -775,7 +775,7 @@ def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
 
 
 def curve_intersection(line_start, line_end, curve_points):
-    # Implement the curve intersection algorithm using all_intersections from bezier.geometric_intersection
+    # this could easily return ts together with nodes
 
     curve_nodes = np.asfortranarray(
         [
@@ -836,7 +836,7 @@ if __name__ == "__main__":
         UFOpath = testsDir / "_.ufo"
         font = OpenFont(UFOpath)
     ############################### XXX
-    rGlyph = font["test01"].copy()
+    rGlyph = font["test02"].copy()
     ############################### XXX
     if "intersectionTest" in font:
         del font["intersectionTest"]
@@ -852,7 +852,7 @@ if __name__ == "__main__":
     # TIME COMPARISON
 
     start_time = time.time()
-    intersections = find_intersectionsForBooleanGlyph(glyph, *refLine)
+    intersectionsA = find_intersectionsForBooleanGlyph(glyph, *refLine)
     end_time = time.time()
 
     print(f"RB Execution time: {end_time - start_time} seconds")
@@ -860,7 +860,7 @@ if __name__ == "__main__":
     if rfActive:
         _glyph = font["intersectionTest"]
         start_time = time.time()
-        intersections = tools.IntersectGlyphWithLine(
+        intersectionsA = tools.IntersectGlyphWithLine(
             _glyph,
             refLine,
         )
@@ -868,9 +868,9 @@ if __name__ == "__main__":
         print(f"RF Execution time: {end_time - start_time} seconds")
 
     pen = rGlyph.getPen()
-
-    if intersections:
-        for idx, p in enumerate(intersections):
+    _intersections = intersectionsA
+    if _intersections:
+        for idx, p in enumerate(_intersections):
             if idx == 0:
                 pen.moveTo(p)
                 continue
