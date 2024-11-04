@@ -1,3 +1,7 @@
+# This file uses the bezier library made by Danny Hermes, which is licensed under the Apache License, Version 2.0.
+# You may obtain a copy of the License at https://www.apache.org/licenses/LICENSE-2.0
+
+
 from __future__ import division
 
 import math
@@ -474,7 +478,7 @@ def angle(A: Sequence[Number], B: Sequence[Number]) -> Number:
 
 def calcBezier(t: Number, *pointList: Sequence[Sequence[Number]]) -> Sequence[Number]:
     """Returns coordinates for factor called 't' (from 0 to 1) based on cubic bezier formula."""
-    assert len(pointList) == 4 and isinstance(t, Number)
+    assert len(pointList) == 4 and isinstance(t, Number), f"{len(pointList)}"
     p1x, p1y = pointList[0]
     p2x, p2y = pointList[1]
     p3x, p3y = pointList[2]
@@ -659,71 +663,243 @@ def getPerpendicularLineToTangent(
 #########################################################################
 #########################################################################
 
-
-def IntersectGlyphWithLine(
-    glyph,
-    line: tuple[float | int],
-    canHaveComponent: bool = False,
-    addSideBearings: bool = False,
-) -> tuple[tuple[float | int]]: ...
+from booleanOperations.booleanGlyph import BooleanGlyph
+import numpy as np
+from bezier import Curve
+from bezier._geometric_intersection import all_intersections
 
 
-def intersects_rects(rect1, rect2):
-    return not (
-        rect1[0] > rect2[0] + rect2[2]
-        or rect1[0] + rect1[2] < rect2[0]
-        or rect1[1] > rect2[1] + rect2[3]
-        or rect1[1] + rect1[3] < rect2[1]
-    )
-
-
-def pointsAreTheSame(A, B, threshold):
-    ax, ay = A
-    bx, by = B
-    return math.fabs(ax - bx) < threshold and math.fabs(ay - by) < threshold
-
-
-from fontTools.pens.boundsPen import BoundsPen
-
-
-def calculate_intersections(glyph, line):
-    startPoint, endPoint = line
+def find_intersections(glyph: BooleanGlyph, line_start: tuple, line_end: tuple) -> list:
     intersections = []
 
-    bounds = self.fast_bounds()
-    line_bound = {
-        min(startPoint[0], endPoint[0]),
-        min(startPoint[1], endPoint[1]),
-        math.fabs(startPoint[0] - endPoint[0]),
-        math.fabs(startPoint[1] - endPoint[1]),
-    }
-    if math.fabs(line_bound[3]) < 0.000001:
-        line_bound[1] -= 1
-        line_bound[3] += 2
-    elif math.fabs(line_bound[2]) < 0.000001:
-        line_bound[0] -= 1
-        line_bound[2] += 2
+    for contour in glyph.contours:
+        pointPenPoints = contour._points
+        lastCurvePoint = None
+        num_points = len(pointPenPoints)
 
-    if intersects_rects(line_bound, bounds):
+        for pointIdx, point in enumerate(pointPenPoints):
+            if point[0] == "moveTo":
+                continue
 
-        for contours in glyph.contours:
+            if point[0] == "curve":
+                if pointIdx == 0:
+                    lastCurvePoint = point
+                    continue
+                elif pointIdx == num_points - 1:
+                    points = [point[1], lastCurvePoint[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    continue
 
-            path_intersections = self.calculate_intersections_for_path(
-                contours, startPoint, endPoint
-            )
-            intersections.extend(path_intersections)
+            if point[0] == "line":
+                if pointIdx == 0:
+                    lastCurvePoint = point
+                    continue
+                elif pointIdx == num_points - 1:
+                    points = [pointPenPoints[pointIdx - 1][1], point[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    points = [point[1], lastCurvePoint[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    continue
 
-    has_startPoint = any(
-        pointsAreTheSame(point, startPoint, 0.000001) for point in intersections
-    )
-    has_endPoint = any(
-        pointsAreTheSame(point, endPoint, 0.000001) for point in intersections
-    )
+            if point[0] is None and pointIdx != num_points - 1:
+                continue
 
-    if not has_startPoint:
-        intersections.append(startPoint)
-    if not has_endPoint:
-        intersections.append(endPoint)
+            segLength = 4 if point[0] == "curve" else 2 if point[0] == "line" else 3
 
-    intersections.sort(key=lambda point: (point[0], point[1]), reverse=False)
+            if not lastCurvePoint or (
+                pointIdx != num_points - 1 and point[0] is not None
+            ):
+                points = [
+                    pointPenPoints[i][1]
+                    for i in range(pointIdx + 1 - segLength, pointIdx + 1)
+                ]
+            else:
+                points = [
+                    pointPenPoints[i][1]
+                    for i in range(pointIdx + 1 - segLength, pointIdx + 1)
+                ] + [lastCurvePoint[1]]
+
+            intersection = calculate_intersection(line_start, line_end, points)
+            if intersection is not None:
+                intersections.append(intersection)
+
     return intersections
+
+
+def calculate_intersection(line1_start, line1_end, points):
+
+    if len(points) == 2:
+        # Handle line segment intersection
+        return line_segment_intersection(line1_start, line1_end, points[0], points[1])
+    elif len(points) == 4:
+        # Handle curve intersection
+        return curve_intersection(line1_start, line1_end, points)
+
+
+def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
+    # Implement the curve intersection algorithm using all_intersections from bezier.geometric_intersection
+
+    curve_nodes = np.asfortranarray(
+        [
+            [line2_start[0], line2_end[0]],
+            [line2_start[1], line2_end[1]],
+        ],
+        dtype=np.float64,  # Ensure the dtype is float64
+    )
+
+    line_nodes = np.asfortranarray(
+        [
+            [line1_start[0], line1_end[0]],
+            [line1_start[1], line1_end[1]],
+        ],
+        dtype=np.float64,  # Ensure the dtype is float64
+    )
+
+    intersections = all_intersections(curve_nodes, line_nodes)
+
+    if intersections[0].size > 0:
+        # s_val = intersections[0][0, 0]
+        # x, y = Curve(curve_nodes, degree=1).evaluate(s_val).tolist()
+        # return x[0], y[0]
+        return calcLine(
+            intersections[0][0, 0],
+            (curve_nodes[0][0], curve_nodes[1][0]),
+            (curve_nodes[0][1], curve_nodes[1][1]),
+        )
+
+    return None
+    # x1, y1 = line1_start
+    # x2, y2 = line1_end
+    # x3, y3 = line2_start
+    # x4, y4 = line2_end
+
+    # denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    # if denom == 0:
+    #     return None  # Lines are parallel
+
+    # num1 = x1 * y2 - y1 * x2
+    # num2 = x3 * y4 - y3 * x4
+
+    # intersect_x = (num1 * (x3 - x4) - (x1 - x2) * num2) / denom
+    # intersect_y = (num1 * (y3 - y4) - (y1 - y2) * num2) / denom
+
+    # if (
+    #     min(x1, x2) <= intersect_x <= max(x1, x2)
+    #     and min(y1, y2) <= intersect_y <= max(y1, y2)
+    #     and min(x3, x4) <= intersect_x <= max(x3, x4)
+    #     and min(y3, y4) <= intersect_y <= max(y3, y4)
+    # ):
+    #     return (intersect_x, intersect_y)
+    # return None
+
+
+def curve_intersection(line_start, line_end, curve_points):
+    # Implement the curve intersection algorithm using all_intersections from bezier.geometric_intersection
+
+    curve_nodes = np.asfortranarray(
+        [
+            [
+                curve_points[0][0],
+                curve_points[1][0],
+                curve_points[2][0],
+                curve_points[3][0],
+            ],
+            [
+                curve_points[0][1],
+                curve_points[1][1],
+                curve_points[2][1],
+                curve_points[3][1],
+            ],
+        ],
+        dtype=np.float64,  # Ensure the dtype is float64
+    )
+
+    line_nodes = np.asfortranarray(
+        [
+            [line_start[0], line_end[0]],
+            [line_start[1], line_end[1]],
+        ],
+        dtype=np.float64,  # Ensure the dtype is float64
+    )
+
+    intersections = all_intersections(curve_nodes, line_nodes)
+
+    if intersections[0].size > 0:
+        return calcBezier(
+            intersections[0][0, 0],
+            *(
+                (curve_nodes[0][0], curve_nodes[1][0]),
+                (curve_nodes[0][1], curve_nodes[1][1]),
+                (curve_nodes[0][2], curve_nodes[1][2]),
+                (curve_nodes[0][3], curve_nodes[1][3]),
+            ),
+        )
+
+    return None
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    from fontParts.world import OpenFont
+    import time
+
+    rfActive = False
+    try:
+        from mojo import tools  # type: ignore
+
+        font = CurrentFont()  # type: ignore
+        rfActive = True
+    except:
+        rootDir = Path(__file__).parent.parent
+        testsDir = rootDir / "tests"
+        UFOpath = testsDir / "_.ufo"
+        font = OpenFont(UFOpath)
+    ############################### XXX
+    rGlyph = font["test01"].copy()
+    ############################### XXX
+    if "intersectionTest" in font:
+        del font["intersectionTest"]
+
+    font["intersectionTest"] = rGlyph
+
+    rGlyph = font["intersectionTest"]
+
+    glyph = BooleanGlyph(rGlyph)
+
+    refLine = (-50, -100), (600, 60)
+
+    # TIME COMPARISON
+
+    start_time = time.time()
+    intersections = find_intersections(glyph, *refLine)
+    end_time = time.time()
+
+    print(f"RB Execution time: {end_time - start_time} seconds")
+
+    if rfActive:
+        _glyph = font["intersectionTest"]
+        start_time = time.time()
+        intersections = tools.IntersectGlyphWithLine(
+            _glyph,
+            refLine,
+        )
+        end_time = time.time()
+        print(f"RF Execution time: {end_time - start_time} seconds")
+
+    pen = rGlyph.getPen()
+
+    if intersections:
+        for idx, p in enumerate(intersections):
+            if idx == 0:
+                pen.moveTo(p)
+                continue
+            pen.lineTo(p)
+        pen.endPath()
+    # print(intersections)
+# Example usage:
