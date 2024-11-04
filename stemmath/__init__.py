@@ -745,7 +745,6 @@ def calculate_intersection(line1_start, line1_end, points):
 
 
 def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
-    # Implement the curve intersection algorithm using all_intersections from bezier.geometric_intersection
 
     curve_nodes = np.asfortranarray(
         [
@@ -766,9 +765,6 @@ def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
     intersections = all_intersections(curve_nodes, line_nodes)
 
     if intersections[0].size > 0:
-        # s_val = intersections[0][0, 0]
-        # x, y = Curve(curve_nodes, degree=1).evaluate(s_val).tolist()
-        # return x[0], y[0]
         return calcLine(
             intersections[0][0, 0],
             (curve_nodes[0][0], curve_nodes[1][0]),
@@ -776,29 +772,6 @@ def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
         )
 
     return None
-    # x1, y1 = line1_start
-    # x2, y2 = line1_end
-    # x3, y3 = line2_start
-    # x4, y4 = line2_end
-
-    # denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-    # if denom == 0:
-    #     return None  # Lines are parallel
-
-    # num1 = x1 * y2 - y1 * x2
-    # num2 = x3 * y4 - y3 * x4
-
-    # intersect_x = (num1 * (x3 - x4) - (x1 - x2) * num2) / denom
-    # intersect_y = (num1 * (y3 - y4) - (y1 - y2) * num2) / denom
-
-    # if (
-    #     min(x1, x2) <= intersect_x <= max(x1, x2)
-    #     and min(y1, y2) <= intersect_y <= max(y1, y2)
-    #     and min(x3, x4) <= intersect_x <= max(x3, x4)
-    #     and min(y3, y4) <= intersect_y <= max(y3, y4)
-    # ):
-    #     return (intersect_x, intersect_y)
-    # return None
 
 
 def curve_intersection(line_start, line_end, curve_points):
