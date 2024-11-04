@@ -11,7 +11,6 @@ from typing import Any, Sequence
 
 from fontParts.base import BaseSegment
 from fontTools.misc.bezierTools import splitCubicAtT, splitQuadraticAtT
-from icecream import ic
 
 
 ACCURACY = 18
@@ -665,7 +664,7 @@ def getPerpendicularLineToTangent(
 
 from booleanOperations.booleanGlyph import BooleanGlyph
 import numpy as np
-from bezier._geometric_intersection import all_intersections
+from stemmath.intersect import all_intersections
 from fontParts.base import BaseGlyph
 
 
@@ -836,7 +835,7 @@ def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
         dtype=np.float64,  # Ensure the dtype is float64
     )
 
-    intersections = all_intersections(curve_nodes, line_nodes)
+    intersections = all_intersections(curve_nodes, line_nodes, False)
 
     if intersections[0].size > 0:
         return calcLine(
@@ -877,7 +876,7 @@ def curve_intersection(line_start, line_end, curve_points):
         dtype=np.float64,  # Ensure the dtype is float64
     )
 
-    intersections = all_intersections(curve_nodes, line_nodes)
+    intersections = all_intersections(curve_nodes, line_nodes, False)
 
     if intersections[0].size > 0:
         return calcBezier(
@@ -935,22 +934,9 @@ if __name__ == "__main__":
     if rfActive:
         _glyph = font["intersectionTest"]
         start_time = time.time()
-        intersectionsA = tools.IntersectGlyphWithLine(
+        intersectionsB = tools.IntersectGlyphWithLine(
             _glyph,
             refLine,
         )
         end_time = time.time()
         print(f"RF Execution time: {end_time - start_time} seconds")
-
-    pen = rGlyph.getPen()
-    _intersections = intersectionsA
-    print(_intersections)
-    # if _intersections:
-    #     for idx, p in enumerate(_intersections):
-    #         if idx == 0:
-    #             pen.moveTo(p)
-    #             continue
-    #         pen.lineTo(p)
-    #     pen.endPath()
-    # print(intersections)
-# Example usage:
