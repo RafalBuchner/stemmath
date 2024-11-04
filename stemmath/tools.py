@@ -3,6 +3,7 @@ from booleanOperations.booleanGlyph import BooleanGlyph
 from icecream import ic
 from bezier import Curve
 import numpy as np
+from bezier.hazmat import intersection_helpers
 
 
 def find_intersections(glyph: BooleanGlyph, line_start: tuple, line_end: tuple) -> list:
@@ -11,66 +12,58 @@ def find_intersections(glyph: BooleanGlyph, line_start: tuple, line_end: tuple) 
     for contour in glyph.contours:
         pointPenPoints = contour._points
         lastCurvePoint = None
+        num_points = len(pointPenPoints)
+
         for pointIdx, point in enumerate(pointPenPoints):
-            segLength = None
-            match point[0]:
-                case "moveTo":
+            if point[0] == "moveTo":
+                continue
+
+            if point[0] == "curve":
+                if pointIdx == 0:
+                    lastCurvePoint = point
                     continue
-                case "curve":
-                    if pointIdx == 0:
-                        lastCurvePoint = point
-                        continue
-                    elif not (len(pointPenPoints) - 1) - pointIdx:
-                        points = [point[1], lastCurvePoint[1]]
-                        intersection = calculate_intersection(
-                            line_start, line_end, points
-                        )
-                        if intersection:
-                            intersections.append(intersection)
-                        continue
-                    segLength = 4
-                case "line":
-                    if pointIdx == 0:
-                        lastCurvePoint = point
-                        continue
-                    elif not (len(pointPenPoints) - 1) - pointIdx:
-                        points = [pointPenPoints[pointIdx - 1][1], point[1]]
-                        intersection = calculate_intersection(
-                            line_start, line_end, points
-                        )
-                        if intersection:
-                            intersections.append(intersection)
-                        points = [point[1], lastCurvePoint[1]]
-                        intersection = calculate_intersection(
-                            line_start, line_end, points
-                        )
-                        if intersection:
-                            intersections.append(intersection)
-                        continue
-                    segLength = 2
-                case None:
-                    if pointIdx != len(pointPenPoints) - 1:
-                        continue
-                    segLength = 3
+                elif pointIdx == num_points - 1:
+                    points = [point[1], lastCurvePoint[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    continue
+
+            if point[0] == "line":
+                if pointIdx == 0:
+                    lastCurvePoint = point
+                    continue
+                elif pointIdx == num_points - 1:
+                    points = [pointPenPoints[pointIdx - 1][1], point[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    points = [point[1], lastCurvePoint[1]]
+                    intersection = calculate_intersection(line_start, line_end, points)
+                    if intersection:
+                        intersections.append(intersection)
+                    continue
+
+            if point[0] is None and pointIdx != num_points - 1:
+                continue
+
+            segLength = 4 if point[0] == "curve" else 2 if point[0] == "line" else 3
 
             if not lastCurvePoint or (
-                pointIdx != len(pointPenPoints) - 1 and point[0] is not None
+                pointIdx != num_points - 1 and point[0] is not None
             ):
                 points = [
-                    point[1]
-                    for point in pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1]
+                    pointPenPoints[i][1]
+                    for i in range(pointIdx + 1 - segLength, pointIdx + 1)
                 ]
             else:
                 points = [
-                    point[1]
-                    for point in pointPenPoints[pointIdx + 1 - segLength : pointIdx + 1]
+                    pointPenPoints[i][1]
+                    for i in range(pointIdx + 1 - segLength, pointIdx + 1)
                 ] + [lastCurvePoint[1]]
 
-            if points[0][0] == "line" and points[1][0] == "move":
-                return
-
             intersection = calculate_intersection(line_start, line_end, points)
-            if intersection:
+            if intersection is not None:
                 intersections.append(intersection)
 
     return intersections
@@ -96,12 +89,11 @@ def line_segment_intersection(line1_start, line1_end, line2_start, line2_end):
     if denom == 0:
         return None  # Lines are parallel
 
-    intersect_x = (
-        (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
-    ) / denom
-    intersect_y = (
-        (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
-    ) / denom
+    num1 = x1 * y2 - y1 * x2
+    num2 = x3 * y4 - y3 * x4
+
+    intersect_x = (num1 * (x3 - x4) - (x1 - x2) * num2) / denom
+    intersect_y = (num1 * (y3 - y4) - (y1 - y2) * num2) / denom
 
     if (
         min(x1, x2) <= intersect_x <= max(x1, x2)
@@ -118,33 +110,34 @@ def curve_intersection(line_start, line_end, curve_points):
     # This function should return the intersection point (x, y) if it exists, otherwise None
     # For simplicity, we can use a numerical method to find intersections
 
-    nodes = np.asfortranarray(
+    nodes = [
         [
-            [
-                curve_points[0][0],
-                curve_points[1][0],
-                curve_points[2][0],
-                curve_points[3][0],
-            ],
-            [
-                curve_points[0][1],
-                curve_points[1][1],
-                curve_points[2][1],
-                curve_points[3][1],
-            ],
-        ]
-    )
+            curve_points[0][0],
+            curve_points[1][0],
+            curve_points[2][0],
+            curve_points[3][0],
+        ],
+        [
+            curve_points[0][1],
+            curve_points[1][1],
+            curve_points[2][1],
+            curve_points[3][1],
+        ],
+    ]
+
     curve = Curve(nodes, degree=3)
 
-    line_nodes = np.asfortranarray(
-        [
-            [line_start[0], line_end[0]],
-            [line_start[1], line_end[1]],
-        ]
-    )
+    line_nodes = [
+        [line_start[0], line_end[0]],
+        [line_start[1], line_end[1]],
+    ]
+
     line = Curve(line_nodes, degree=1)
 
-    intersections = curve.intersect(line)
+    intersections = curve.intersect(
+        line,
+        intersection_helpers.IntersectionStrategy.GEOMETRIC,
+    )
     if intersections.size > 0:
         x, y = curve.evaluate(intersections[0][0]).tolist()
         return x[0], y[0]
@@ -197,7 +190,6 @@ if __name__ == "__main__":
             refLine,
         )
         end_time = time.time()
-
         print(f"RF Execution time: {end_time - start_time} seconds")
 
     pen = rGlyph.getPen()
