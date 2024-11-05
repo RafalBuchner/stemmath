@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stemmath"
-version = "0.1.3"
+version = "0.1.4"
 description = "engine for stem plow"
 authors = ["Rafał Buchner <rafal.buchner@gmail.com>"]
 readme = "README.md"
