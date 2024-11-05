@@ -664,8 +664,8 @@ def getPerpendicularLineToTangent(
 
 from booleanOperations.booleanGlyph import BooleanGlyph
 import numpy as np
-from stemmath.intersect import all_intersections
 from fontParts.base import BaseGlyph
+from bezier._speedup import curve_intersections as all_intersections
 
 
 def find_intersectionsForDefconGlyph(
