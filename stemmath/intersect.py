@@ -18,7 +18,6 @@ will be used if the extension can be built.
 """
 
 import atexit
-
 import stemmath._speedup as _speedup
 
 bbox_intersect = _speedup.bbox_intersect
